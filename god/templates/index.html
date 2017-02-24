@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Dashboard</title>
+{% endblock %}
+
+{% block container %}
+<div class="container">
+{% if game_list %}
+    {% for game in game_list %}
+        {{ game }}
+    {% endfor %}
+{% else %}
+    无数据
+{% endif %}
+</div>
+{% endblock %}
