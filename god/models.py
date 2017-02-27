@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
-
+from god.custom.myfield import ListField
 import datetime
 from django.utils import timezone
 # Create your models here.
@@ -10,6 +10,7 @@ from django.utils import timezone
 class Game(models.Model):
     game_name = models.CharField("项目标识", max_length=200)
     game_cn = models.CharField("项目中文简称", max_length=200)
+    black_list = ListField()
     create_time = models.DateTimeField("创建时间", auto_now_add=True)
 
     def _is_new_project(self):
