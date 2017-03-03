@@ -1,17 +1,168 @@
 {% extends 'base.html' %}
 
+
 {% block title %}
     <title>Dashboard</title>
 {% endblock %}
 
 {% block container %}
 <div class="container">
-{% if game_list %}
-    {% for game in game_list %}
-        {{ game }}
+
+{% if game_name_list %}
+    {% for game_name in game_name_list %}
+
+        <a href="{% url 'god:get_game_backup' game_name  %}"><div id="{{ game_name }}" style="width: 500px;height: 200px; float: left; margin-bottom:80px; margin-left: 50px"></div></a>
+
     {% endfor %}
 {% else %}
     无数据
 {% endif %}
 </div>
+
+
+<script>
+
+
+    $(document).ready(function(){
+                $.getJSON("{% url 'god:get_db_backup' %}", function(callback){
+                    console.log(callback)
+
+                    DrawChats(callback);
+                });
+            }
+
+    );
+
+
+    function DrawChats(chart_data){
+
+
+        for(var item in chart_data) {
+
+            var data = chart_data[item];
+
+            var game = data.name;
+            var date = data.date;
+            var time = data.time;
+
+            if(typeof(date) == "object"){
+                var date = "该项目没有备份"
+            }
+
+            if (typeof(time) !== "object"){
+                if(time.length == 4){
+                    var time = time.substring(0,2) + "点" + time.substring(2,4) + "分";
+                }
+                else{
+                    var time = time + "点";
+                }
+            }
+            else{
+                var time = "";
+            }
+
+            var backup_succ = new Array();
+            var full_succ = data['ips'] - data['full_fail'].length;
+            backup_succ.push(full_succ);
+            var inc_succ = data['ips'] - data['inc_fail'].length;
+            backup_succ.push(inc_succ);
+
+
+
+            var backup_fail = new Array();
+            backup_fail.push(data['full_fail'].length);
+            backup_fail.push(data['inc_fail'].length);
+
+            var chart = echarts.init(document.getElementById(game), 'infographic');
+
+
+
+{##}
+{#            chart.on('click', function(params){#}
+{#                var backup_name = params.name;#}
+{#                if (backup_name == "完整备份"){#}
+{#                    var backup_type = 0;#}
+{#                }#}
+{#                else if(backup_name == "增量备份"){#}
+{#                    var backup_type = 1;#}
+{#                }#}
+{##}
+{##}
+{#                console.log(params);#}
+{#            })#}
+{##}
+
+
+
+            chart.setOption({
+                title: {
+                    text: data['name_cn'],
+                    subtext: "时间：" + date + " " + time,
+                    x: 'center'
+                },
+
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    data: ['完整备份','增量备份']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'value'
+                },
+                yAxis: {
+                    type: 'category',
+                    data: ['完整备份','增量备份']
+                },
+
+                series: [
+                    {
+                        name: '失败',
+                        type: 'bar',
+                        stack: '个',
+                        label: {
+                            normal: {
+                                show: true,
+                                position: 'insideRight'
+                            }
+                        },
+                        data: backup_fail
+                    },
+                    {
+                        name: '成功',
+                        type: 'bar',
+                        stack: '个',
+                        label: {
+                            normal: {
+                                show: true,
+                                position: 'insideRight'
+                            }
+                        },
+                        itemStype: {
+                            normal: {color: 'yellowgreen'}
+                        },
+                        data: backup_succ
+                    },
+                ]
+
+            });
+
+        }
+
+    }
+
+
+</script>
+
+
+
 {% endblock %}

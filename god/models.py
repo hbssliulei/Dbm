@@ -11,7 +11,27 @@ class Game(models.Model):
     game_name = models.CharField("项目标识", max_length=200)
     game_cn = models.CharField("项目中文简称", max_length=200)
     black_list = ListField()
+
+    game_status = (
+        (0, '已上线'),
+        (1, '已下线')
+    )
+    status = models.SmallIntegerField("项目状态", choices=game_status, default=0)
+
     create_time = models.DateTimeField("创建时间", auto_now_add=True)
+
+    def _get_black_list(self):
+        return "【{}个】   {}".format(len(self.black_list), ' ,'.join(self.black_list))
+    _get_black_list.short_description = "测服IP列表"
+
+    def format_datetime(self):
+        return self.create_time.strftime("%Y-%m-%d")
+    format_datetime.short_description = "创建时间"
+
+    def _is_online(self):
+        return self.status == 0
+    _is_online.boolean = True
+    _is_online.short_description = "维护？"
 
     def _is_new_project(self):
         return self.create_time >= timezone.now() - datetime.timedelta(days = 30)

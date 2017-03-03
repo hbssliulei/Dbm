@@ -8,6 +8,13 @@
         <!-- Bootstrap -->
         <link href="{% static 'css/bootstrap.css' %}" rel="stylesheet">
 
+        <script src="{% static 'js/jquery.dataTables.js' %}"></script>
+        <script src="{% static 'js/DT_bootstrap.js' %}"></script>
+
+        <script src="{% static 'js/jquery-2.1.1.min.js' %}"></script>
+        <script src="{% static 'plugins/echarts/echarts.js' %}"></script>
+        <script src="{% static 'plugins/echarts/infographic.js' %}"></script>
+
         <style type="text/css">
             body {
                 padding-top: 70px;
@@ -36,7 +43,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="#">Dbm</a>
+                <a class="navbar-brand" href="#">{{ SITE_NAME }}</a>
             </div>
 
 

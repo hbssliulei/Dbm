@@ -1,3 +1,4 @@
+#-*- coding:utf-8 -*-
 """
 Django settings for Dbm project.
 
@@ -63,6 +64,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'god.views.global_setting',
             ],
         },
     },
@@ -126,3 +128,5 @@ STATIC_URL = '/static/'
 TEMPLATE_DIRS = (
    os.path.join(BASE_DIR,  'templates'),
 )
+
+SITE_NAME = 'DB备份检查'
