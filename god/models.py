@@ -24,9 +24,9 @@ class Game(models.Model):
         return "【{}个】   {}".format(len(self.black_list), ' ,'.join(self.black_list))
     _get_black_list.short_description = "测服IP列表"
 
-    def format_datetime(self):
+    def format_create_time(self):
         return self.create_time.strftime("%Y-%m-%d")
-    format_datetime.short_description = "创建时间"
+    format_create_time.short_description = "创建时间"
 
     def _is_online(self):
         return self.status == 0
@@ -39,7 +39,7 @@ class Game(models.Model):
     _is_new_project.short_description = "最否是新项目"
 
     def __unicode__(self):
-        return self.game_cn
+        return self.game_name
 
     class Meta:
         db_table = 'game'
@@ -51,8 +51,12 @@ class Assets(models.Model):
     ip = models.GenericIPAddressField("IP")
     datetime = models.DateTimeField(auto_now=True)
 
+    def format_datetime(self):
+        return self.datetime.strftime("%Y-%m-%d %H:%M:%S")
+    format_datetime.short_description = "更新时间"
+
     def __unicode__(self):
-        return self.ip
+        return "{}-{}".format(self.game,self.ip)
 
     class Meta:
         db_table = 'assets'
@@ -63,7 +67,7 @@ class dbBackup(models.Model):
     game = models.ForeignKey("Game", verbose_name="项目标识")
     ip = models.GenericIPAddressField("IP")
     curdate = models.DateField("最新备份日期", auto_now=True)
-    inc = models.CharField("最新备份时间", max_length=8)
+    inc = models.CharField("备份时间", max_length=8)
 
     backup_types = (
         (0, '完整备份'),
@@ -73,7 +77,11 @@ class dbBackup(models.Model):
     backup_type = models.SmallIntegerField("备份类型", choices=backup_types)
 
     def __unicode__(self):
-        return self.ip
+        return "{}-{}-{}-{}".format(self.game, self.ip, self.backup_type, self.inc)
+
+    def format_curdate(self):
+        return self.curdate.strftime("%Y-%m-%d")
+    format_curdate.short_description = "备份日期"
 
     class Meta:
         db_table = 'dbBackup'

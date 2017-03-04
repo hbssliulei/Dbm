@@ -1,0 +1,29 @@
+<tbody>
+            <tr>
+                <td colspan="6">
+                    <div id="fy" align="right">
+                        {% if result.has_previous %}
+                            <a href="?page={{ result.previous_page_number }}">上一页</a>
+                        {% endif %}
+
+
+                        {% if result.has_next %}
+                            <a href="?page={{ result.next_page_number }}">下一页</a>
+                        {% endif %}
+
+                        <span>page {{ result.number }} of {{ result.paginator.num_pages }}</span>
+
+                        {% for page in result.paginator.page_range %}
+                            {% ifequal page result.number %}
+                                <a class="paginator_current" title="当前页:{{ page }}"><span>{{ page }}</span></a>
+                            {% else %}
+                                <a class="paginator" href="?page={{ page }}" title="{{ page }}"><span>{{ page }}</span></a>
+                            {% endifequal %}
+                        {% endfor %}
+
+
+
+                    </div>
+                </td>
+            </tr>
+        </tbody>

@@ -1,22 +1,23 @@
 {% extends 'base.html' %}
 
-
 {% block title %}
-    <title></title>
+    <title>备份失败详情</title>
 {% endblock %}
 <script>
     $(document).ready(function() {
     $('#result_table').DataTable();
 } );
 </script>
+
 {% block container %}
 <div class="container">
+{% load myfilter %}
 
-    <h2>备份失败信息</h2>
+    <h2>完整备份失败信息</h2>
 
     <br />
 
-    <table id="result_table" class="table table-striped table-bordered" cellspacing="0" width="100%">
+        <table id="result_table" class="table table-striped table-bordered" cellspacing="0" width="100%">
         <thead>
             <tr>
                 <td align="center" style="font-size: 14px; background-color: #fbff08; color: #ff0843"><strong>序号</strong></td>
@@ -30,14 +31,14 @@
 
 
         <tbody>
-        {% if result %}
-        {% for i in result %}
+        {% if full_backup_fail_result %}
+        {% for i in full_backup_fail_result %}
             <tr>
                 <td align="center">{{ forloop.counter }}</td>
                 <td align="center">{{ i.game }}</td>
                 <td align="center">{{ i.ip }}</td>
                 <td align="center">{{ i.type }}</td>
-                <td align="center">{{ i.inc }}</td>
+                <td align="center">{{ i.date|format_date }}</td>
                 <td align="center"><a href="#"><strong>是</strong></a></td>
             </tr>
         {% endfor %}
@@ -50,19 +51,90 @@
             <tr>
                 <td colspan="6">
                     <div id="fy" align="right">
-                        {% if result.has_previous %}
-                            <a href="?page={{ result.previous_page_number }}">上一页</a>
+                        {% if full_content.has_previous %}
+                            <a href="?page={{ full_content.previous_page_number }}">上一页</a>
                         {% endif %}
 
 
-                        {% if result.has_next %}
-                            <a href="?page={{ result.next_page_number }}">下一页</a>
+                        {% if full_content.has_next %}
+                            <a href="?page={{ full_content.next_page_number }}">下一页</a>
                         {% endif %}
 
-                        <span>page {{ result.number }} of {{ result.paginator.num_pages }}</span>
+                        <span>page {{ full_content.number }} of {{ full_content.paginator.num_pages }}</span>
 
-                        {% for page in result.paginator.page_range %}
-                            {% ifequal page result.number %}
+                        {% for page in full_content.paginator.page_range %}
+                            {% ifequal page full_content.number %}
+                                <a class="paginator_current" title="当前页:{{ page }}"><span>{{ page }}</span></a>
+                            {% else %}
+                                <a class="paginator" href="?page={{ page }}" title="{{ page }}"><span>{{ page }}</span></a>
+                            {% endifequal %}
+                        {% endfor %}
+
+
+
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+
+    </table>
+
+
+    <br />
+    <hr>
+    <br />
+
+    <h2>增量备份失败信息</h2>
+
+    <table id="result_table" class="table table-striped table-bordered" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <td align="center" style="font-size: 14px; background-color: #fbff08; color: #ff0843"><strong>序号</strong></td>
+                <td align="center" style="font-size: 14px; background-color: #fbff08; color: #ff0843"><strong>项目</strong></td>
+                <td align="center" style="font-size: 14px; background-color: #fbff08; color: #ff0843"><strong>IP</strong></td>
+                <td align="center" style="font-size: 14px; background-color: #fbff08; color: #ff0843"><strong>类型</strong></td>
+                <td align="center" style="font-size: 14px; background-color: #fbff08; color: #ff0843"><strong>备份日期</strong></td>
+                <td align="center" style="font-size: 14px; background-color: #fbff08; color: #ff0843"><strong>备份时间</strong></td>
+                <td align="center" style="font-size: 14px; background-color: #fbff08; color: #ff0843"><strong>是否设为测服</strong></td>
+            </tr>
+        </thead>
+
+
+        <tbody>
+        {% if inc_content %}
+        {% for i in inc_content %}
+            <tr>
+                <td align="center">{{ forloop.counter }}</td>
+                <td align="center">{{ i.game }}</td>
+                <td align="center">{{ i.ip }}</td>
+                <td align="center">{{ i.type }}</td>
+                <td align="center">{{ i.date|format_date }}</td>
+                <td align="center">{{ i.time }}</td>
+                <td align="center"><a href="#"><strong>是</strong></a></td>
+            </tr>
+        {% endfor %}
+        {% else %}
+            <tr><td colspan="7">无数据</td></tr>
+        {% endif %}
+        </tbody>
+
+        <tbody>
+            <tr>
+                <td colspan="7">
+                    <div id="fy" align="right">
+                        {% if inc_content.has_previous %}
+                            <a href="?page={{ inc_content.previous_page_number }}">上一页</a>
+                        {% endif %}
+
+
+                        {% if inc_content.has_next %}
+                            <a href="?page={{ inc_content.next_page_number }}">下一页</a>
+                        {% endif %}
+
+                        <span>page {{ inc_content.number }} of {{ inc_content.paginator.num_pages }}</span>
+
+                        {% for page in inc_content.paginator.page_range %}
+                            {% ifequal page inc_content.number %}
                                 <a class="paginator_current" title="当前页:{{ page }}"><span>{{ page }}</span></a>
                             {% else %}
                                 <a class="paginator" href="?page={{ page }}" title="{{ page }}"><span>{{ page }}</span></a>

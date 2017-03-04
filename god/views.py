@@ -7,7 +7,7 @@ from django.conf import settings
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
 import json
-import time
+import time, datetime
 
 def global_setting(request):
     return {'SITE_NAME': settings.SITE_NAME}
@@ -53,10 +53,12 @@ def get_db_backup_data(request):
         ips = get_asset_ip(game)
 
         new_date = get_max_date(game)
+
         if new_date:
             full_backup_fail_ips = list(set(ips) - set(i['ip'] for i in game.dbbackup_set.filter(game=game, backup_type=0, curdate=new_date).values('ip').exclude(ip__in=game.black_list)))
         else:
             full_backup_fail_ips = list(set(ips) - set(i['ip'] for i in game.dbbackup_set.filter(game=game, backup_type=0).values('ip').exclude(ip__in=game.black_list)))
+
 
         new_time = get_time(game)
         if new_time:
@@ -78,62 +80,80 @@ def get_db_backup_data(request):
 
 
 def get_game_backup(request, game):
-    result = []
 
     game = Game.objects.get(game_name=game)
     ips = get_asset_ip(game)
 
-    
 
     #获取该项目所有的ip
+    backup_ips = game.dbbackup_set.values("ip").distinct().exclude(ip__in=game.black_list)
 
     #获取所有ip的完整备份的最后一次备份
+    full_backup_fail_result = []
 
-    # new_date = get_max_date(game)
-    # new_time = get_time(game)
-    #
-    # game_data = game.dbbackup_set.filter(curdate='2017-02-28', inc=new_time)
-    #
-    # fail_ips = []
-    #
-    # if [data['ip'] for data in game_data.values('ip')]:
-    #     for ip in ips:
-    #         if ip not in [data['ip'] for data in game_data.values('ip')]:
-    #             fail_ips.append(ip)
-    # else:
-    #     fail_ips = ips
-    #
-    #
-    #
-    # for fail_ip in fail_ips:
-    #     ret = {}
-    #     try:
-    #         new_full_result = game.dbbackup_set.filter(game=game, ip=fail_ip, backup_type=0)
-    #     except ValueError:
-    #         new_full_result = None
+    #full_backup_data = game.dbbackup_set.filter(backup_type=0).values("ip", "curdate").exclude(ip__in=game.black_list)
 
-    # for data in game_data:
-    #     ret = {}
-    #     if data.ip not in fail_ips:continue
-    #     else:
-    #         ret["game"] = data.game
-    #         ret["ip"] = data.ip
-    #         ret["type"] = data.get_backup_type_display()
-    #         ret["inc"] = data.inc
-    #
-    #         result.append(ret)
+    full_backup_fail_ips = list(set(ips) - set([i['ip'] for i in game.dbbackup_set.filter(backup_type=0, curdate=get_max_date(game)).values("ip").exclude(ip__in=game.black_list)]))
+
+    if full_backup_fail_ips:
+        for full_backup_ip in full_backup_fail_ips:
+            full_backup_fail_ret = {}
+            try:
+                full_fail_data = game.dbbackup_set.filter(backup_type=0, ip=full_backup_ip).values().order_by("-curdate")[0]
+            except:
+                full_fail_data = None
 
 
-    paginator = Paginator(result, 10)
+            full_backup_fail_ret['game'] = game.game_cn
+            full_backup_fail_ret['ip'] = full_backup_ip
+            if full_fail_data:
+                full_backup_fail_ret['date'] = full_fail_data['curdate']
+            else:
+                full_backup_fail_ret['date'] = "未备份"
+            full_backup_fail_ret['type'] = "完整备份"
 
 
+            full_backup_fail_result.append(full_backup_fail_ret)
+
+    paginator = Paginator(full_backup_fail_result, 10)
     page = request.GET.get("page")
     try:
-        content = paginator.page(page)
-    except (EmptyPage,InvalidPage):
-        content = paginator.page(1)
+        full_content = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        full_content = paginator.page(1)
 
-    return render_to_response('detail.html', {'result':content})
+
+    inc_backup_fail_result = []
+
+    inc_backup_fail_ips = list(set(ips) - set([i['ip'] for i in game.dbbackup_set.filter(backup_type=1, inc=get_time(game)).values("ip").exclude(ip__in=game.black_list)]))
+
+    for inc_fail_ip in inc_backup_fail_ips:
+        inc_backup_fail_ret = {}
+        try:
+            inc_fail_data = game.dbbackup_set.filter(backup_type=1, ip=inc_fail_ip).values().order_by("-inc")[0]
+        except:
+            inc_fail_data = None
+
+        inc_backup_fail_ret['game'] = game.game_cn
+        inc_backup_fail_ret['ip'] = inc_fail_ip
+        inc_backup_fail_ret['type'] = "增量备份"
+        if inc_fail_data:
+            inc_backup_fail_ret['date'] = inc_fail_data['curdate']
+            inc_backup_fail_ret["time"] = inc_fail_data['inc']
+        else:
+            inc_backup_fail_ret['date'] = "未备份"
+            inc_backup_fail_ret['time'] = "未备份"
+
+        inc_backup_fail_result.append(inc_backup_fail_ret)
+
+    paginator = Paginator(inc_backup_fail_result, 10)
+    page = request.GET.get("page")
+    try:
+        inc_content = paginator.page(page)
+    except (EmptyPage, InvalidPage):
+        inc_content = paginator.page(1)
+
+    return render_to_response('detail.html', locals())
 
 
 def test(request):
