@@ -4,6 +4,7 @@
     <title>备份失败详情</title>
 {% endblock %}
 
+
 {% include 'nav.html' %}
 
 {% block container %}
@@ -37,7 +38,7 @@
                 <td align="center">{{ i.ip }}</td>
                 <td align="center">{{ i.type }}</td>
                 <td align="center">{{ i.date|format_date }}</td>
-                <td align="center"><a href="{% url 'addtestip' %}?game={{ i.game_name }}&ip={{ i.ip }}"><strong>是</strong></a></td>
+                <td align="center"><a href="{% url 'addtestip' %}?game={{ i.game_name }}&ip={{ i.ip }}" onclick="return addtest()"><strong>是</strong></a></td>
             </tr>
         {% endfor %}
         {% else %}
@@ -108,7 +109,7 @@
                 <td align="center">{{ i.type }}</td>
                 <td align="center">{{ i.date|format_date }}</td>
                 <td align="center">{{ i.time }}</td>
-                <td align="center"><a href="{% url 'addtestip' %}?game={{ i.game_name }}&ip={{ i.ip }}" onclick="addtestip()"><strong>是</strong></a></td>
+                <td align="center"><a href="{% url 'addtestip' %}?game={{ i.game_name }}&ip={{ i.ip }}" onclick="return addtest()"><strong>是</strong></a></td>
             </tr>
         {% endfor %}
         {% else %}
@@ -152,8 +153,3 @@
 </div>
 {% endblock %}
 
-<script>
-    $(document).ready(function() {
-    $('#result_table').DataTable();
-});
-</script>

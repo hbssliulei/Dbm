@@ -3,7 +3,28 @@
 <!DOCTYPE html>
 <!-- saved from url=(0023)http://dbm.ruizhan.com/ -->
 <html>
-<head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<head>
+<script>
+    function addtest(){
+        msg="确定要将此ip设为测试吗？";
+        if(confirm(msg)==true){
+            return true
+        }
+        else{
+            return false
+        }
+    };
+
+
+    $(document).ready(function() {
+    $('#result_table').DataTable();
+});
+
+</script>
+
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
  {% block title %}
  <title>数据库备份检查</title>
  {% endblock %}
@@ -13,6 +34,7 @@
         <script src="{% static 'js/jquery.dataTables.js' %}"></script>
         <script src="{% static 'js/DT_bootstrap.js' %}"></script>
 
+        <script src="{% static 'js/layer.js' %}"></script>
         <script src="{% static 'js/jquery-2.1.1.min.js' %}"></script>
         <script src="{% static 'plugins/echarts/echarts.js' %}"></script>
         <script src="{% static 'plugins/echarts/infographic.js' %}"></script>
