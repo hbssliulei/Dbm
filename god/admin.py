@@ -9,13 +9,13 @@ class GameAdmin(admin.ModelAdmin):
 
 @admin.register(Assets)
 class AssetAdmin(admin.ModelAdmin):
-    list_display = ('game', 'ip', 'format_datetime')
+    list_display = ('game', 'ip', 'datetime')
     list_filter = ('game',)
 
 @admin.register(dbBackup)
 class dbBackupAdmin(admin.ModelAdmin):
-    list_display = ('game', 'ip', 'format_curdate', 'inc', 'backup_type')
-    list_filter = ('game',)
+    list_display = ('game', 'ip', 'curdate', 'inc', 'backup_type')
+    list_filter = ('game', 'backup_type')
     search_fields = ('game',)
 
     fieldsets = (

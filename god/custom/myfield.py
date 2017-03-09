@@ -13,10 +13,10 @@ class ListField(models.TextField):
             value = []
 
         if isinstance(value, list):
-            return value
+            print sorted(value)
+            return sorted(value)
 
         return ast.literal_eval(value)
-
 
     def get_prep_value(self, value):
         if not value:

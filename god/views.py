@@ -1,24 +1,33 @@
 #-*- coding:utf-8 -*-
-from django.shortcuts import render, get_list_or_404, render_to_response
-from django.http import HttpResponse
+from django.shortcuts import render, render_to_response
+from django.http import HttpResponse, HttpResponseRedirect
+
 from django.views import generic
-from models import Game, Assets, dbBackup
-from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 
 import json
-import time, datetime
+import datetime
+import requests
+
+from django.conf import settings
+from models import Game, Assets, dbBackup
+
+TODAY = datetime.datetime.now().strftime("%Y-%m-%d")
 
 def global_setting(request):
     return {'SITE_NAME': settings.SITE_NAME}
 
 def get_asset_ip(game):
-     return list(set([i['ip'] for i in game.assets_set.values('ip').exclude(ip__in=game.black_list)]))
+    return list(set([i['ip'] for i in game.assets_set.values('ip').exclude(ip__in=game.black_list)]))
 
 
 def get_max_date(game):
     try:
-        new_date = max([i.get("curdate").strftime("%Y-%m-%d") for i in game.dbbackup_set.filter(backup_type=0).values('curdate').distinct()])
+        new_date = max([i.get("curdate") for i in game.dbbackup_set.filter(backup_type=0).values('curdate').distinct()])
     except ValueError:
         new_date = None
     return new_date
@@ -37,7 +46,8 @@ class IndexView(generic.ListView):
     context_object_name = 'game_name_list'
 
     def get_queryset(self):
-        game_name_list = [game['game_name'] for game in Game.objects.filter(status=0).values("game_name")]
+        #game_name_list = [game['game_name'] for game in Game.objects.filter(status=0).values("game_name")]
+        game_name_list = [game.get("game__game_name") for game in Assets.objects.select_related().values("game__game_name").distinct()]
         return game_name_list
 
 def get_db_backup_data(request):
@@ -104,16 +114,19 @@ def get_game_backup(request, game):
                 full_fail_data = None
 
 
-            full_backup_fail_ret['game'] = game.game_cn
+            full_backup_fail_ret['game_cn'] = game.game_cn
+            full_backup_fail_ret['game_name'] = game.game_name
             full_backup_fail_ret['ip'] = full_backup_ip
             if full_fail_data:
-                full_backup_fail_ret['date'] = full_fail_data['curdate']
+                full_backup_fail_ret['date'] = full_fail_data['curdate'].strftime("%Y-%m-%d")
             else:
                 full_backup_fail_ret['date'] = "未备份"
             full_backup_fail_ret['type'] = "完整备份"
 
 
             full_backup_fail_result.append(full_backup_fail_ret)
+
+    full_backup_fail_result.sort()
 
     paginator = Paginator(full_backup_fail_result, 10)
     page = request.GET.get("page")
@@ -134,17 +147,20 @@ def get_game_backup(request, game):
         except:
             inc_fail_data = None
 
-        inc_backup_fail_ret['game'] = game.game_cn
+        inc_backup_fail_ret['game_cn'] = game.game_cn
+        inc_backup_fail_ret['game_name'] = game.game_name
         inc_backup_fail_ret['ip'] = inc_fail_ip
         inc_backup_fail_ret['type'] = "增量备份"
         if inc_fail_data:
-            inc_backup_fail_ret['date'] = inc_fail_data['curdate']
+            inc_backup_fail_ret['date'] = inc_fail_data['curdate'].strftime("%Y-%m-%d")
             inc_backup_fail_ret["time"] = inc_fail_data['inc']
         else:
             inc_backup_fail_ret['date'] = "未备份"
             inc_backup_fail_ret['time'] = "未备份"
 
         inc_backup_fail_result.append(inc_backup_fail_ret)
+
+    inc_backup_fail_result.sort()
 
     paginator = Paginator(inc_backup_fail_result, 10)
     page = request.GET.get("page")
@@ -156,10 +172,107 @@ def get_game_backup(request, game):
     return render_to_response('detail.html', locals())
 
 
-def test(request):
-    gs = Game.objects.get(pk=16)
-    ips = "11.11.11.11,22.22.22.22".split(",")
-    gs.black_list.extend(ips)
-    gs.save()
-    return HttpResponse(gs.black_list)
+@csrf_exempt
+@require_http_methods(['POST'])
+def saveDB(request):
 
+    game_list = Game.objects.all()
+
+    #从资产里拉到各项目的ip
+    for game in game_list:
+        url = "http://monitor.ruizhan.com/api?t=ip&game={}&status=1".format(game.game_name)
+
+        ips = ( ip.get("ip") for ip in json.loads(requests.get(url).text))
+
+        assetsIps = [ip.get("ip") for ip in game.assets_set.filter(datetime=TODAY).values("ip")]
+
+
+        for ip in ips:
+            if ip not in assetsIps:
+                inAsset = game.assets_set.create(ip=ip, datetime=TODAY)
+
+    ip = request.POST.get("ip")
+    curdate = request.POST.get("curdate")
+    inc = request.POST.get("name").split(".")[0].split("_")[1]
+    status = request.POST.get("status")
+    game_name = Assets.objects.select_related().filter(ip=ip, datetime=TODAY).values("game__game_name")[0].get("game__game_name")
+
+    game = Game.objects.get(game_name=game_name)
+
+    try:
+        line = game.dbbackup_set.create(ip=ip, curdate=curdate, inc=inc, backup_type=status)
+    except Exception as e:
+        return HttpResponse("fail")
+    return HttpResponse("ok")
+
+def addTestIp(request):
+    """
+    该接口可为各项目添加测试机器ip
+    """
+    game_name = request.GET.get('game')
+    ip = request.GET.get('ip')
+
+    game = Game.objects.get(game_name=game_name)
+    game.black_list.append(ip.encode("utf-8"))
+    game.save()
+
+    return HttpResponseRedirect(reverse('god:get_game_backup', args=[game_name]))
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def online(request):
+    game_name = request.POST.get("game_name")
+    game_cn = request.POST.get("game_cn")
+    black_list = request.POST.get("black_list")
+
+    if not Game.objects.filter(game_name=game_name).exists():
+        add_ret = Game(game_name=game_name, game_cn=game_cn, black_list=black_list)
+        try:
+            add_ret.save()
+        except Exception as e:
+            print e
+            return HttpResponse("fail")
+        return HttpResponse("ok")
+    else:
+        return HttpResponse("exist")
+
+@csrf_exempt
+@require_http_methods(['POST'])
+def offline(request, game):
+    """
+    当项目下线时，可调用该接口更改该项目的状态
+    """
+    try:
+        game = Game.objects.filter(game_name=game).update(status=1)
+    except Exception as e:
+        return HttpResponse(e)
+
+    return HttpResponse("ok")
+
+def checkBackupStatus(request):
+
+    game_list = Game.objects.all()
+
+    one_hour_ago = (datetime.datetime.now() - datetime.timedelta(hours=1)).strftime("%H%M")
+
+    backupResult = {}
+
+    for game in game_list:
+        url = "http://monitor.ruizhan.com/api?t=ip&game={}&status=1".format(game.game_name)
+        ips = [ ip.get("ip") for ip in json.loads(requests.get(url).text) ]
+        try:
+            checkTime = game.dbbackup_set.filter(curdate=TODAY, backup_type=1).values("inc").order_by("-inc")[1].get("inc")
+        except Exception:
+            checkTime = None
+
+        assetsIps = [ip.get("ip") for ip in game.assets_set.values("ip").exclude(ip__in=game.black_list)]
+
+        backupIp = [ip.get("ip").encode("utf-8") for ip in game.dbbackup_set.filter(curdate=TODAY, backup_type=1, inc=checkTime).values("ip")]
+
+        backupResult[game.game_name] = list(set(assetsIps) - set(backupIp))
+
+    backupFailNum = 0
+    for game, ips in backupResult.items():
+        backupFailNum += len(ips)
+
+    return HttpResponse(backupFailNum)

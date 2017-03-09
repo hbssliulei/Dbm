@@ -21,6 +21,7 @@ class Game(models.Model):
     create_time = models.DateTimeField("创建时间", auto_now_add=True)
 
     def _get_black_list(self):
+
         return "【{}个】   {}".format(len(self.black_list), ' ,'.join(self.black_list))
     _get_black_list.short_description = "测服IP列表"
 
@@ -49,11 +50,7 @@ class Game(models.Model):
 class Assets(models.Model):
     game = models.ForeignKey('Game', verbose_name='项目标识')
     ip = models.GenericIPAddressField("IP")
-    datetime = models.DateTimeField(auto_now=True)
-
-    def format_datetime(self):
-        return self.datetime.strftime("%Y-%m-%d %H:%M:%S")
-    format_datetime.short_description = "更新时间"
+    datetime = models.CharField("更新时间", max_length=60)
 
     def __unicode__(self):
         return "{}-{}".format(self.game,self.ip)
@@ -66,7 +63,7 @@ class Assets(models.Model):
 class dbBackup(models.Model):
     game = models.ForeignKey("Game", verbose_name="项目标识")
     ip = models.GenericIPAddressField("IP")
-    curdate = models.DateField("最新备份日期", auto_now=True)
+    curdate = models.CharField("最新备份日期", max_length=60)
     inc = models.CharField("备份时间", max_length=8)
 
     backup_types = (
@@ -78,10 +75,6 @@ class dbBackup(models.Model):
 
     def __unicode__(self):
         return "{}-{}-{}-{}".format(self.game, self.ip, self.backup_type, self.inc)
-
-    def format_curdate(self):
-        return self.curdate.strftime("%Y-%m-%d")
-    format_curdate.short_description = "备份日期"
 
     class Meta:
         db_table = 'dbBackup'

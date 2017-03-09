@@ -20,5 +20,11 @@ from god import views
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', views.IndexView.as_view()),
-    url(r'^dbbackup/', include('god.urls', namespace='god'))
+    url(r'^dbbackup/', include('god.urls', namespace='god')),
+
+    url(r'^api/saveDB/', views.saveDB, name='saveDB'),
+    url(r'^api/addTestIp/', views.addTestIp, name="addtestip"),
+    url(r'^api/online/', views.online, name='online'),
+    url(r'^api/offline/(?P<game>\w+)/', views.offline, name='offline'),
+    url(r'^api/checkBackupStatus/', views.checkBackupStatus, name='checkBackupStatus'),
 ]

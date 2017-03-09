@@ -3,14 +3,12 @@
 {% block title %}
     <title>备份失败详情</title>
 {% endblock %}
-<script>
-    $(document).ready(function() {
-    $('#result_table').DataTable();
-} );
-</script>
+
+{% include 'nav.html' %}
 
 {% block container %}
 <div class="container">
+
 {% load myfilter %}
 
     <h2>完整备份失败信息</h2>
@@ -31,15 +29,15 @@
 
 
         <tbody>
-        {% if full_backup_fail_result %}
-        {% for i in full_backup_fail_result %}
+        {% if full_content %}
+        {% for i in full_content %}
             <tr>
                 <td align="center">{{ forloop.counter }}</td>
-                <td align="center">{{ i.game }}</td>
+                <td align="center">{{ i.game_cn }}</td>
                 <td align="center">{{ i.ip }}</td>
                 <td align="center">{{ i.type }}</td>
                 <td align="center">{{ i.date|format_date }}</td>
-                <td align="center"><a href="#"><strong>是</strong></a></td>
+                <td align="center"><a href="{% url 'addtestip' %}?game={{ i.game_name }}&ip={{ i.ip }}"><strong>是</strong></a></td>
             </tr>
         {% endfor %}
         {% else %}
@@ -105,12 +103,12 @@
         {% for i in inc_content %}
             <tr>
                 <td align="center">{{ forloop.counter }}</td>
-                <td align="center">{{ i.game }}</td>
+                <td align="center">{{ i.game_cn }}</td>
                 <td align="center">{{ i.ip }}</td>
                 <td align="center">{{ i.type }}</td>
                 <td align="center">{{ i.date|format_date }}</td>
                 <td align="center">{{ i.time }}</td>
-                <td align="center"><a href="#"><strong>是</strong></a></td>
+                <td align="center"><a href="{% url 'addtestip' %}?game={{ i.game_name }}&ip={{ i.ip }}" onclick="addtestip()"><strong>是</strong></a></td>
             </tr>
         {% endfor %}
         {% else %}
@@ -153,3 +151,9 @@
 
 </div>
 {% endblock %}
+
+<script>
+    $(document).ready(function() {
+    $('#result_table').DataTable();
+});
+</script>
