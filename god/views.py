@@ -180,7 +180,7 @@ def saveDB(request):
 
     #从资产里拉到各项目的ip
     for game in game_list:
-        url = "http://monitor.ruizhan.com/api?t=ip&game={}&status=1".format(game.game_name)
+        url = "http://xxx.xxx.com/api?t=ip&game={}&status=1".format(game.game_name)
 
         ips = ( ip.get("ip") for ip in json.loads(requests.get(url).text))
 
@@ -258,7 +258,7 @@ def checkBackupStatus(request):
     backupResult = {}
 
     for game in game_list:
-        url = "http://monitor.ruizhan.com/api?t=ip&game={}&status=1".format(game.game_name)
+        url = "http://xxx.xxx.com/api?t=ip&game={}&status=1".format(game.game_name)
         ips = [ ip.get("ip") for ip in json.loads(requests.get(url).text) ]
         try:
             checkTime = game.dbbackup_set.filter(curdate=TODAY, backup_type=1).values("inc").order_by("-inc")[1].get("inc")
