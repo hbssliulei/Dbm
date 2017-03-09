@@ -13,7 +13,6 @@ class ListField(models.TextField):
             value = []
 
         if isinstance(value, list):
-            print sorted(value)
             return sorted(value)
 
         return ast.literal_eval(value)
